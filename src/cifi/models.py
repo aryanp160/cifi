@@ -30,6 +30,43 @@ class Severity(str, Enum):
     INFO = "info"
 
 
+class RulePriority(int, Enum):
+    CRITICAL = 100
+    HIGH = 80
+    MEDIUM = 50
+    LOW = 20
+
+
+class ConfidenceLevel(str, Enum):
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+
+    @classmethod
+    def from_score(cls, score: float) -> "ConfidenceLevel":
+        if score >= 0.85:
+            return cls.HIGH
+        elif score >= 0.60:
+            return cls.MEDIUM
+        return cls.LOW
+
+
+class Language(str, Enum):
+    PYTHON = "python"
+    NODE = "node"
+    GENERIC = "generic"
+
+
+class Framework(str, Enum):
+    PYTEST = "pytest"
+    JEST = "jest"
+    NPM = "npm"
+    UV = "uv"
+    PIP = "pip"
+    POETRY = "poetry"
+    GENERIC = "generic"
+
+
 class CodeLocation(BaseModel):
     file_path: Optional[str] = Field(None, description="Path to the source file where failure occurred")
     line_number: Optional[int] = Field(None, description="Line number of the failure")
@@ -47,7 +84,15 @@ class RuleMatchMetadata(BaseModel):
     rule_id: str = Field(..., description="Unique ID of the triggered rule")
     rule_name: str = Field(..., description="Human readable rule name")
     description: str = Field("", description="Rule description / root cause hint")
-    confidence: float = Field(1.0, ge=0.0, le=1.0, description="Confidence score of the match")
+    confidence: float = Field(1.0, ge=0.0, le=1.0, description="Internal confidence score float")
+    priority: RulePriority = Field(RulePriority.MEDIUM, description="Rule execution priority weight")
+
+
+class ExplainabilityBlock(BaseModel):
+    rule_id: str = Field(..., description="Triggered rule identifier")
+    matched_expression: str = Field(..., description="Pattern or token that matched")
+    stack_keyword: str = Field(..., description="Extracted stack trace keyword")
+    reason: str = Field(..., description="Clear root cause explanation answering Why?")
 
 
 class DiagnosticItem(BaseModel):
@@ -55,16 +100,25 @@ class DiagnosticItem(BaseModel):
     severity: Severity = Field(Severity.ERROR, description="Diagnostic severity level")
     summary: str = Field(..., description="Short single-line description of the error")
     message: str = Field("", description="Detailed error message or stack trace string")
+    fingerprint: Optional[str] = Field(None, description="Deterministic fingerprint ID (e.g. PYTHON-IMPORT-UV-001)")
+    confidence_score: float = Field(0.90, ge=0.0, le=1.0, description="Internal float confidence score")
+    explainability: Optional[ExplainabilityBlock] = Field(None, description="Explainability block answering Why?")
     location: Optional[CodeLocation] = Field(None, description="Extracted code location")
     context: Optional[LogContext] = Field(None, description="Log line context block")
     rule_match: Optional[RuleMatchMetadata] = Field(None, description="Matched rule metadata")
     suggested_remediation: Optional[str] = Field(None, description="Actionable deterministic remediation hint")
+
+    @property
+    def confidence_level(self) -> ConfidenceLevel:
+        return ConfidenceLevel.from_score(self.confidence_score)
 
 
 class CIFailureReport(BaseModel):
     log_source: str = Field("unknown", description="Source filename, pipeline name, or stream identifier")
     parser_type: str = Field("generic", description="Parser engine used (e.g. github_actions, pytest, cargo)")
     total_lines_parsed: int = Field(0, ge=0, description="Total number of lines ingested")
+    detected_language: Language = Field(Language.GENERIC, description="Auto-detected language ecosystem")
+    detected_framework: Framework = Field(Framework.GENERIC, description="Auto-detected test/build framework")
     diagnostics: List[DiagnosticItem] = Field(default_factory=list, description="Extracted diagnostic findings")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary custom execution metadata")
     execution_time_ms: Optional[float] = Field(None, description="Pipeline execution duration in milliseconds")
