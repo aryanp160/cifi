@@ -12,6 +12,15 @@ class FailureCategory(str, Enum):
     PERMISSION_DENIED = "permission_denied"
     FILE_NOT_FOUND = "file_not_found"
     SYNTAX_ERROR = "syntax_error"
+    MEMORY_EXCEEDED = "memory_exceeded"
+    NETWORK_ERROR = "network_error"
+    DATABASE_MIGRATION = "database_migration"
+    ENVIRONMENT_VARIABLE = "environment_variable"
+    TYPE_MISMATCH = "type_mismatch"
+    LOCK_TIMEOUT = "lock_timeout"
+    DOCKER_ERROR = "docker_error"
+    DISK_SPACE = "disk_space"
+    DEPENDENCY_CONFLICT = "dependency_conflict"
     UNKNOWN_FAILURE = "unknown_failure"
 
 
@@ -49,6 +58,7 @@ class DiagnosticItem(BaseModel):
     location: Optional[CodeLocation] = Field(None, description="Extracted code location")
     context: Optional[LogContext] = Field(None, description="Log line context block")
     rule_match: Optional[RuleMatchMetadata] = Field(None, description="Matched rule metadata")
+    suggested_remediation: Optional[str] = Field(None, description="Actionable deterministic remediation hint")
 
 
 class CIFailureReport(BaseModel):
@@ -57,6 +67,7 @@ class CIFailureReport(BaseModel):
     total_lines_parsed: int = Field(0, ge=0, description="Total number of lines ingested")
     diagnostics: List[DiagnosticItem] = Field(default_factory=list, description="Extracted diagnostic findings")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary custom execution metadata")
+    execution_time_ms: Optional[float] = Field(None, description="Pipeline execution duration in milliseconds")
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), description="Report generation timestamp")
 
     @property
@@ -70,3 +81,7 @@ class CIFailureReport(BaseModel):
     @property
     def warning_count(self) -> int:
         return sum(1 for d in self.diagnostics if d.severity == Severity.WARNING)
+
+    @property
+    def diagnosed_count(self) -> int:
+        return sum(1 for d in self.diagnostics if d.category != FailureCategory.UNKNOWN_FAILURE)
