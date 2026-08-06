@@ -7,6 +7,15 @@ from cifi.rules.builtin import (
     TimeoutRule,
     PermissionRule,
     FileNotFoundErrorRule,
+    MemoryExceededRule,
+    NetworkConnectionRule,
+    DatabaseMigrationRule,
+    EnvironmentVariableRule,
+    TypeMismatchRule,
+    LockTimeoutRule,
+    DockerContainerRule,
+    DiskSpaceRule,
+    DependencyConflictRule,
 )
 
 __all__ = [
@@ -18,4 +27,13 @@ __all__ = [
     "TimeoutRule",
     "PermissionRule",
     "FileNotFoundErrorRule",
+    "MemoryExceededRule",
+    "NetworkConnectionRule",
+    "DatabaseMigrationRule",
+    "EnvironmentVariableRule",
+    "TypeMismatchRule",
+    "LockTimeoutRule",
+    "DockerContainerRule",
+    "DiskSpaceRule",
+    "DependencyConflictRule",
 ]
