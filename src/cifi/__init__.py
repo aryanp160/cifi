@@ -1,6 +1,6 @@
-"""cifi — CI Failure Intelligence.
+"""cifi — Log Intelligence Engine.
 
-Intelligent CI log parsing, failure normalization, rule engine, and JSON exporting.
+Pure deterministic 5-stage pipeline for diagnosing 80%+ of CI failures without AI.
 """
 
-__version__ = "0.1.0a1"
+__version__ = "0.1.0a2"
