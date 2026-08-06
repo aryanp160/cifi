@@ -9,7 +9,7 @@ from cifi.exporter import OutputNormalizer
 class LogIntelligencePipeline:
     """Unified, deterministic 5-stage Log Intelligence Engine.
 
-    Pipeline: Log -> Parser -> Normalizer -> Rule Engine -> Actionable Report
+    Pipeline: Log -> Detect Ecosystem -> Parser -> Normalizer -> Rule Engine (Fingerprints & Explainability) -> Actionable Report
     Diagnoses 80%+ of common CI failures without requiring external AI/LLMs.
     """
 
@@ -42,8 +42,8 @@ class LogIntelligencePipeline:
 
         report = active_parser.parse(log_content, source_name=source_name)
 
-        # 2. Rule Engine Classification & Remediation Mapping
-        report = self.rule_engine.process_report(report)
+        # 2. Rule Engine Classification, Ecosystem Detection, Fingerprint & Explainability Mapping
+        report = self.rule_engine.process_report(report, log_text=log_content)
 
         # 3. Output Normalization
         report = self.normalizer.normalize(report)

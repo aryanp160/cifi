@@ -1,0 +1,4 @@
+FAIL src/components/Header.test.js
+  ● Header Component › renders user avatar
+    at Object.<anonymous> (src/components/Header.test.js:15:7)
+npm ERR! Test failed.

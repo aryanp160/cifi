@@ -5,8 +5,11 @@ from cifi.models import (
     FailureCategory,
     Severity,
     CodeLocation,
-    LogContext,
-    RuleMatchMetadata,
+    ConfidenceLevel,
+    Language,
+    Framework,
+    ExplainabilityBlock,
+    RulePriority,
 )
 
 
@@ -18,31 +21,38 @@ def test_code_location_creation():
     assert loc.function_name == "test_foo"
 
 
-def test_diagnostic_item_defaults():
-    item = DiagnosticItem(summary="Test failure")
-    assert item.category == FailureCategory.UNKNOWN_FAILURE
-    assert item.severity == Severity.ERROR
-    assert item.summary == "Test failure"
-    assert item.location is None
+def test_confidence_level_mapping():
+    assert ConfidenceLevel.from_score(0.95) == ConfidenceLevel.HIGH
+    assert ConfidenceLevel.from_score(0.85) == ConfidenceLevel.HIGH
+    assert ConfidenceLevel.from_score(0.75) == ConfidenceLevel.MEDIUM
+    assert ConfidenceLevel.from_score(0.50) == ConfidenceLevel.LOW
 
 
-def test_report_failure_counts():
-    err_diag = DiagnosticItem(
-        category=FailureCategory.ASSERTION_FAILURE,
-        severity=Severity.ERROR,
-        summary="Assertion Error",
+def test_explainability_and_fingerprint():
+    exp = ExplainabilityBlock(
+        rule_id="R002",
+        matched_expression="ModuleNotFoundError",
+        stack_keyword="pyjwt",
+        reason="Detected import failure after dependency resolution.",
     )
-    warn_diag = DiagnosticItem(
-        category=FailureCategory.UNKNOWN_FAILURE,
-        severity=Severity.WARNING,
-        summary="Deprecation warning",
+    diag = DiagnosticItem(
+        summary="Missing pyjwt package",
+        fingerprint="PYTHON-IMPORT-UV-001",
+        confidence_score=0.98,
+        explainability=exp,
     )
+
+    assert diag.fingerprint == "PYTHON-IMPORT-UV-001"
+    assert diag.confidence_level == ConfidenceLevel.HIGH
+    assert diag.explainability.rule_id == "R002"
+    assert "dependency resolution" in diag.explainability.reason
+
+
+def test_report_language_framework_defaults():
     report = CIFailureReport(
-        log_source="ci_run.log",
-        total_lines_parsed=100,
-        diagnostics=[err_diag, warn_diag],
+        log_source="build.log",
+        detected_language=Language.PYTHON,
+        detected_framework=Framework.UV,
     )
-
-    assert report.has_failures is True
-    assert report.failure_count == 1
-    assert report.warning_count == 1
+    assert report.detected_language == Language.PYTHON
+    assert report.detected_framework == Framework.UV

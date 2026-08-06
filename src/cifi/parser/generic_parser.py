@@ -15,9 +15,9 @@ class GenericParser(BaseParser):
 
     name = "generic"
 
-    # Match standard error markers: ERROR, FATAL, Exception, Traceback
+    # Match standard error markers: ERROR, FATAL, Exception, Traceback, npm ERR!
     ERROR_KEYWORD_REGEX = re.compile(
-        r"(?:\[ERROR\]|\[FATAL\]|ERROR:|FATAL:|Traceback \(most recent call last\):|([A-Za-z0-9_]+Error):)\s*(?P<msg>.*)",
+        r"(?:\[ERROR\]|\[FATAL\]|ERROR:|FATAL:|npm ERR!|Traceback \(most recent call last\):|([A-Za-z0-9_]+Error):)\s*(?P<msg>.*)",
         re.IGNORECASE,
     )
 
