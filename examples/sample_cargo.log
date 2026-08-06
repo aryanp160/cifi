@@ -1,0 +1,9 @@
+   Compiling my_rust_app v0.1.0 (/checkout)
+error[E0425]: cannot find value `config` in this scope
+  --> src/main.rs:18:9
+   |
+18 |     let _ = config.load();
+   |             ^^^^^^ not found in this scope
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `my_rust_app` due to previous error

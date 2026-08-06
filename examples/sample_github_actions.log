@@ -1,0 +1,5 @@
+2026-08-06T10:00:00.123Z Set up Python 3.12 environment
+2026-08-06T10:00:01.456Z Running build step...
+##[error]file=src/auth/jwt.py,line=42,col=8::ModuleNotFoundError: No module named 'pyjwt'
+##[warning]file=src/config.py,line=12::DeprecationWarning: Use settings object instead of raw dict
+2026-08-06T10:00:02.000Z Process finished with exit code 1
