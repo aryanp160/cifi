@@ -1,0 +1,4 @@
+npm ERR! code MODULE_NOT_FOUND
+npm ERR! Cannot find module 'express'
+npm ERR! Require stack:
+npm ERR! - /app/server.js

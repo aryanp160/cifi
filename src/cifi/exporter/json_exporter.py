@@ -35,7 +35,7 @@ class JSONExporter:
         output = [
             f"=== CI FAILURE DIAGNOSTIC REPORT (Log Intelligence Engine) ===",
             f"Log Source: {data.get('log_source')}",
-            f"Parser: {data.get('parser_type')}",
+            f"Ecosystem: {data.get('detected_language')} ({data.get('detected_framework')})",
             f"Execution Time: {data.get('execution_time_ms')} ms",
             f"Total Failures: {len(failures)}",
             "",
@@ -44,15 +44,25 @@ class JSONExporter:
         for idx, f in enumerate(failures, 1):
             rule_info = f.get("rule_match", {})
             loc = f.get("location", {})
+            exp = f.get("explainability", {})
             remediation = f.get("suggested_remediation")
+            fp = f.get("fingerprint")
+            conf = f.get("confidence_score", 0.9)
+            conf_str = "HIGH" if conf >= 0.85 else ("MEDIUM" if conf >= 0.60 else "LOW")
+
             output.append(f"[{idx}] {f.get('summary')}")
+            if fp:
+                output.append(f"    Fingerprint: {fp}")
             output.append(f"    Category: {f.get('category')}")
+            output.append(f"    Confidence: {conf_str}")
             if rule_info:
-                output.append(f"    Triggered Rule: {rule_info.get('rule_id')} - {rule_info.get('rule_name')}")
+                output.append(f"    Rule: {rule_info.get('rule_id')} ({rule_info.get('rule_name')})")
             if loc and loc.get("file_path"):
                 output.append(f"    Location: {loc.get('file_path')}:{loc.get('line_number') or 1}")
+            if exp and exp.get("reason"):
+                output.append(f"    Why?: {exp.get('reason')}")
             if remediation:
-                output.append(f"    Suggested Remediation: {remediation}")
+                output.append(f"    Actionable Fix: {remediation}")
             output.append(f"    Snippet: {f.get('message')}")
             output.append("")
 

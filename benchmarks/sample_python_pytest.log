@@ -1,0 +1,16 @@
+============================= test session starts =============================
+platform linux -- Python 3.12.6, pytest-8.0.0
+rootdir: /checkout
+collected 2 items
+
+tests/test_api.py F
+
+================================== FAILURES ===================================
+__________________________________ test_login __________________________________
+    def test_login():
+>       assert response.status_code == 200
+E       AssertionError: assert 404 == 200
+
+tests/test_api.py:10: AssertionError
+FAILED tests/test_api.py::test_login - AssertionError: assert 404 == 200
+========================= 1 failed in 0.05s =========================

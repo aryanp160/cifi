@@ -16,10 +16,10 @@ console = Console()
 @click.group()
 @click.version_option(version=__version__, prog_name="cifi")
 def cli():
-    """cifi — Log Intelligence Engine.
+    """cifi — Failure Intelligence Engine.
 
     Pure deterministic 5-stage pipeline for diagnosing 80%+ of CI failures without AI.
-    Log -> Parser -> Normalizer -> Rule Engine -> Actionable Report
+    Log -> Language/Framework Detect -> Parser -> Normalizer -> Rule Engine (Fingerprints & Explainability) -> Report
     """
     pass
 
@@ -71,7 +71,7 @@ def parse_cmd(logfile, output_json, ai_prompt, output, parser_name, verbose):
 
 @cli.command(name="rules")
 def list_rules_cmd():
-    """List all 15 built-in failure classification rules."""
+    """List all built-in deterministic failure classification rules."""
     engine = RuleEngine()
     table = Table(title="cifi Deterministic Failure Rules (80% Non-AI Coverage)", show_header=True, header_style="bold magenta")
     table.add_column("Rule ID", style="cyan", width=8)
@@ -90,11 +90,10 @@ def _render_pretty_report(report, verbose: bool = False):
     """Render interactive color terminal summary using Rich."""
     header = Panel(
         f"[bold white]Log Source:[/bold white] [cyan]{report.log_source}[/cyan] | "
-        f"[bold white]Parser:[/bold white] [yellow]{report.parser_type}[/yellow] | "
+        f"[bold white]Ecosystem:[/bold white] [bold yellow]{report.detected_language.value.upper()}[/bold yellow] ([cyan]{report.detected_framework.value.upper()}[/cyan]) | "
         f"[bold white]Benchmark:[/bold white] {report.execution_time_ms} ms | "
-        f"[bold red]Failures:[/bold red] {report.failure_count} | "
-        f"[bold green]Diagnosed:[/bold green] {report.diagnosed_count}/{len(report.diagnostics)}",
-        title="[bold magenta]cifi — Log Intelligence Engine Report (No-AI Engine)[/bold magenta]",
+        f"[bold red]Failures:[/bold red] {report.failure_count}",
+        title="[bold magenta]cifi — Failure Intelligence Engine Report (No-AI Engine)[/bold magenta]",
         border_style="magenta",
     )
     console.print(header)
@@ -119,13 +118,19 @@ def _render_pretty_report(report, verbose: bool = False):
         if diag.rule_match:
             rule_str = f"{diag.rule_match.rule_id} ({diag.rule_match.rule_name})"
 
+        fp_str = diag.fingerprint or "GENERIC-001"
+        conf_str = diag.confidence_level.value
+        exp_reason = diag.explainability.reason if diag.explainability else "Matched signature pattern."
         remediation_str = diag.suggested_remediation or "Inspect error trace logs below."
 
         body_lines = [
+            f"[bold]Fingerprint:[/bold] [bold cyan]{fp_str}[/bold cyan]",
             f"[bold]Category:[/bold] [green]{diag.category.value}[/green]",
+            f"[bold]Confidence:[/bold] [bold bright_green]{conf_str}[/bold bright_green]",
             f"[bold]Rule Match:[/bold] [cyan]{rule_str}[/cyan]",
             f"[bold]Location:[/bold] [yellow]{loc_str}[/yellow]",
-            f"[bold]Actionable Remediation:[/bold] [bold bright_green]{remediation_str}[/bold bright_green]",
+            f"[bold]Why? (Reason):[/bold] {exp_reason}",
+            f"[bold]Actionable Fix:[/bold] [bold bright_green]{remediation_str}[/bold bright_green]",
             "",
             "[bold]Raw Failure Trace:[/bold]",
             f"  {diag.message}",
