@@ -54,5 +54,5 @@ def test_ai_prompt_format():
     exporter = JSONExporter()
     ai_text = exporter.export_ai_prompt_format(report)
 
-    assert "=== CI FAILURE DIAGNOSTIC REPORT ===" in ai_text
+    assert "=== CI FAILURE DIAGNOSTIC REPORT" in ai_text
     assert "Location: src/app.py:5" in ai_text

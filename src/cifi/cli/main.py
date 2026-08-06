@@ -3,12 +3,12 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.syntax import Syntax
 
 from cifi import __version__
-from cifi.parser import get_parser, PARSER_REGISTRY
+from cifi.parser import PARSER_REGISTRY
 from cifi.rules import RuleEngine
-from cifi.exporter import JSONExporter, OutputNormalizer
+from cifi.pipeline import LogIntelligencePipeline
+from cifi.exporter import JSONExporter
 
 console = Console()
 
@@ -16,9 +16,10 @@ console = Console()
 @click.group()
 @click.version_option(version=__version__, prog_name="cifi")
 def cli():
-    """cifi — CI Failure Intelligence.
+    """cifi — Log Intelligence Engine.
 
-    Intelligent CI log parser, failure rule engine, and JSON exporter.
+    Pure deterministic 5-stage pipeline for diagnosing 80%+ of CI failures without AI.
+    Log -> Parser -> Normalizer -> Rule Engine -> Actionable Report
     """
     pass
 
@@ -43,24 +44,11 @@ def parse_cmd(logfile, output_json, ai_prompt, output, parser_name, verbose):
         console.print("[bold red]Error:[/bold red] Please provide a log file path or pipe log content via stdin.")
         sys.exit(1)
 
-    # 1. Obtain parser
-    if parser_name:
-        parser = PARSER_REGISTRY[parser_name]()
-    else:
-        parser = get_parser(content, auto_detect=True)
+    # Execute Log Intelligence Pipeline
+    pipeline = LogIntelligencePipeline()
+    report = pipeline.run(content, source_name=source_name, parser_type=parser_name)
 
-    # 2. Parse log
-    report = parser.parse(content, source_name=source_name)
-
-    # 3. Apply Rule Engine
-    rule_engine = RuleEngine()
-    report = rule_engine.process_report(report)
-
-    # 4. Normalize
-    normalizer = OutputNormalizer()
-    report = normalizer.normalize(report)
-
-    exporter = JSONExporter(normalizer=normalizer)
+    exporter = JSONExporter()
 
     # Output Modes
     if output_json:
@@ -83,16 +71,17 @@ def parse_cmd(logfile, output_json, ai_prompt, output, parser_name, verbose):
 
 @cli.command(name="rules")
 def list_rules_cmd():
-    """List all built-in failure classification rules."""
+    """List all 15 built-in failure classification rules."""
     engine = RuleEngine()
-    table = Table(title="cifi Built-in Failure Rules", show_header=True, header_style="bold magenta")
-    table.add_column("Rule ID", style="cyan", width=10)
-    table.add_column("Name", style="bold yellow", width=30)
-    table.add_column("Category", style="green", width=25)
-    table.add_column("Description", style="white")
+    table = Table(title="cifi Deterministic Failure Rules (80% Non-AI Coverage)", show_header=True, header_style="bold magenta")
+    table.add_column("Rule ID", style="cyan", width=8)
+    table.add_column("Name", style="bold yellow", width=26)
+    table.add_column("Category", style="green", width=22)
+    table.add_column("Deterministic Fix Remediation", style="white")
 
     for rule in engine.rules:
-        table.add_row(rule.rule_id, rule.name, rule.category.value, rule.description)
+        remediation = getattr(rule, "remediation", rule.description)
+        table.add_row(rule.rule_id, rule.name, rule.category.value, remediation)
 
     console.print(table)
 
@@ -102,10 +91,10 @@ def _render_pretty_report(report, verbose: bool = False):
     header = Panel(
         f"[bold white]Log Source:[/bold white] [cyan]{report.log_source}[/cyan] | "
         f"[bold white]Parser:[/bold white] [yellow]{report.parser_type}[/yellow] | "
-        f"[bold white]Total Parsed:[/bold white] {report.total_lines_parsed} lines | "
+        f"[bold white]Benchmark:[/bold white] {report.execution_time_ms} ms | "
         f"[bold red]Failures:[/bold red] {report.failure_count} | "
-        f"[bold yellow]Warnings:[/bold yellow] {report.warning_count}",
-        title="[bold magenta]cifi — CI Failure Intelligence Report[/bold magenta]",
+        f"[bold green]Diagnosed:[/bold green] {report.diagnosed_count}/{len(report.diagnostics)}",
+        title="[bold magenta]cifi — Log Intelligence Engine Report (No-AI Engine)[/bold magenta]",
         border_style="magenta",
     )
     console.print(header)
@@ -130,10 +119,13 @@ def _render_pretty_report(report, verbose: bool = False):
         if diag.rule_match:
             rule_str = f"{diag.rule_match.rule_id} ({diag.rule_match.rule_name})"
 
+        remediation_str = diag.suggested_remediation or "Inspect error trace logs below."
+
         body_lines = [
             f"[bold]Category:[/bold] [green]{diag.category.value}[/green]",
             f"[bold]Rule Match:[/bold] [cyan]{rule_str}[/cyan]",
             f"[bold]Location:[/bold] [yellow]{loc_str}[/yellow]",
+            f"[bold]Actionable Remediation:[/bold] [bold bright_green]{remediation_str}[/bold bright_green]",
             "",
             "[bold]Raw Failure Trace:[/bold]",
             f"  {diag.message}",

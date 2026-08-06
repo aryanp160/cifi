@@ -33,9 +33,10 @@ class JSONExporter:
         failures = [d for d in data.get("diagnostics", []) if d.get("severity") == "error"]
 
         output = [
-            f"=== CI FAILURE DIAGNOSTIC REPORT ===",
+            f"=== CI FAILURE DIAGNOSTIC REPORT (Log Intelligence Engine) ===",
             f"Log Source: {data.get('log_source')}",
             f"Parser: {data.get('parser_type')}",
+            f"Execution Time: {data.get('execution_time_ms')} ms",
             f"Total Failures: {len(failures)}",
             "",
         ]
@@ -43,12 +44,15 @@ class JSONExporter:
         for idx, f in enumerate(failures, 1):
             rule_info = f.get("rule_match", {})
             loc = f.get("location", {})
+            remediation = f.get("suggested_remediation")
             output.append(f"[{idx}] {f.get('summary')}")
             output.append(f"    Category: {f.get('category')}")
             if rule_info:
                 output.append(f"    Triggered Rule: {rule_info.get('rule_id')} - {rule_info.get('rule_name')}")
             if loc and loc.get("file_path"):
                 output.append(f"    Location: {loc.get('file_path')}:{loc.get('line_number') or 1}")
+            if remediation:
+                output.append(f"    Suggested Remediation: {remediation}")
             output.append(f"    Snippet: {f.get('message')}")
             output.append("")
 
