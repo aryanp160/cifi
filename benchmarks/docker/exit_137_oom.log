@@ -1,0 +1,4 @@
+2026-08-07T00:00:00Z Building Docker image app:latest...
+Step 4/10 : RUN npm run build
+FATAL ERROR: JavaScript heap out of memory
+docker: Error response from daemon: container exit code 137
