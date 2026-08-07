@@ -9,6 +9,7 @@ from cifi.parser import PARSER_REGISTRY
 from cifi.rules import RuleEngine
 from cifi.pipeline import LogIntelligencePipeline
 from cifi.exporter import JSONExporter
+from cifi.benchmarks import BenchmarkRunner
 
 console = Console()
 
@@ -16,7 +17,7 @@ console = Console()
 @click.group()
 @click.version_option(version=__version__, prog_name="cifi")
 def cli():
-    """cifi — Failure Intelligence Engine.
+    """cifi — Log Intelligence Engine.
 
     Pure deterministic 5-stage pipeline for diagnosing 80%+ of CI failures without AI.
     Log -> Language/Framework Detect -> Parser -> Normalizer -> Rule Engine (Fingerprints & Explainability) -> Report
@@ -67,6 +68,40 @@ def parse_cmd(logfile, output_json, ai_prompt, output, parser_name, verbose):
             console.print(f"[bold green]Saved output to {output}[/bold green]")
         else:
             click.echo(result_text)
+
+
+@cli.command(name="benchmark")
+def benchmark_cmd():
+    """Run benchmark framework and zero-regression profiler against benchmarks/ corpus."""
+    runner = BenchmarkRunner()
+    report = runner.run()
+
+    status_color = "green" if report.regression_count == 0 else "red"
+    header = Panel(
+        f"[bold white]Benchmark Corpus Cases:[/bold white] [cyan]{report.total_cases}[/cyan] | "
+        f"[bold white]Accuracy Rate:[/bold white] [bold bright_green]{report.accuracy_rate}%[/bold bright_green] | "
+        f"[bold white]Avg Runtime:[/bold white] [yellow]{report.avg_runtime_ms} ms[/yellow] | "
+        f"[bold white]Regressions:[/bold white] [{status_color}]{report.regression_count}[/{status_color}]",
+        title="[bold magenta]cifi — Empirical Benchmark & Regression Suite[/bold magenta]",
+        border_style=status_color,
+    )
+    console.print(header)
+
+    table = Table(title="Benchmark Performance by CI Category", show_header=True, header_style="bold magenta")
+    table.add_column("Category", style="cyan", width=18)
+    table.add_column("Total Cases", style="white", width=12)
+    table.add_column("Accuracy Rate", style="bold green", width=16)
+    table.add_column("Avg Runtime (ms)", style="yellow", width=16)
+
+    for cat, stat in report.category_summaries.items():
+        table.add_row(
+            cat,
+            str(stat["total"]),
+            f"{stat['accuracy']}%",
+            f"{stat['avg_ms']} ms",
+        )
+
+    console.print(table)
 
 
 @cli.command(name="rules")
