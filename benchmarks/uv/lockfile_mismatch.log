@@ -1,0 +1,3 @@
+2026-08-07T00:00:00Z Running uv sync...
+##[error]file=src/auth.py,line=15::ModuleNotFoundError: No module named 'pyjwt'
+uv error: package pyjwt not resolved in uv.lock

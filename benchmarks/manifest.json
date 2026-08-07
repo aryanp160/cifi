@@ -1,0 +1,50 @@
+{
+  "version": "0.2.1",
+  "sla_targets": {
+    "target_accuracy_rate": 100.0,
+    "max_avg_runtime_ms": 5.0,
+    "max_regressions": 0
+  },
+  "cases": [
+    {
+      "id": "gha-001",
+      "category_folder": "github-actions",
+      "filename": "annotation_error.log",
+      "expected_category": "missing_dependency",
+      "expected_fingerprint": "PYTHON-IMPORT-PIP-002",
+      "expected_confidence": "HIGH"
+    },
+    {
+      "id": "pytest-001",
+      "category_folder": "pytest",
+      "filename": "assertion_failed.log",
+      "expected_category": "assertion_failure",
+      "expected_fingerprint": "PYTEST-ASSERTION-001",
+      "expected_confidence": "HIGH"
+    },
+    {
+      "id": "jest-001",
+      "category_folder": "jest",
+      "filename": "suite_failed.log",
+      "expected_category": "assertion_failure",
+      "expected_fingerprint": "JEST-ASSERTION-001",
+      "expected_confidence": "HIGH"
+    },
+    {
+      "id": "uv-001",
+      "category_folder": "uv",
+      "filename": "lockfile_mismatch.log",
+      "expected_category": "missing_dependency",
+      "expected_fingerprint": "PYTHON-IMPORT-UV-001",
+      "expected_confidence": "HIGH"
+    },
+    {
+      "id": "docker-001",
+      "category_folder": "docker",
+      "filename": "exit_137_oom.log",
+      "expected_category": "memory_exceeded",
+      "expected_fingerprint": "SYS-MEMORY-OOM-001",
+      "expected_confidence": "HIGH"
+    }
+  ]
+}

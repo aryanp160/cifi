@@ -1,0 +1,4 @@
+2026-08-07T00:00:01Z Running GHA workflow step
+##[error]file=src/auth/jwt.py,line=42,col=8::ModuleNotFoundError: No module named 'pyjwt'
+##[warning]file=src/config.py,line=12::DeprecationWarning: Use settings object
+2026-08-07T00:00:02Z Process finished with exit code 1
