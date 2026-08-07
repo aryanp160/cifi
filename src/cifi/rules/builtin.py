@@ -94,7 +94,7 @@ class AssertionFailureRule(Rule):
     remediation = "Inspect test assertion expectations vs actual return values."
 
     REGEX = re.compile(
-        r"(AssertionError|assert |Expected:|Jest Test Failure|Pytest Failure|Test failed)",
+        r"(AssertionError|assert |Expected:|Jest Test Failure|Pytest Failure|Test failed|FAIL\s+)",
         re.IGNORECASE,
     )
 
